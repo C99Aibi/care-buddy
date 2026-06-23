@@ -4,7 +4,7 @@ import { useHealthStore } from '../store';
 import { exercises, categoryNames, priorityLabels } from '../data/exercises';
 import { guidedExerciseConfigs } from '../data/guided-configs';
 import type { Exercise, ExerciseCategory } from '../types';
-import { Play, Clock, Target, CheckCircle, ChevronRight, Headphones } from './Icons';
+import { Play, Clock, Target, CheckCircle, Headphones } from './Icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -121,7 +121,7 @@ function ExerciseCard({ exercise, onClick }: { exercise: Exercise; onClick: () =
   const priority = priorityLabels[exercise.priority];
   return (
     <Card
-      className="cursor-pointer border border-border ring-0 hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring active:bg-muted/50"
+      className="h-[84px] cursor-pointer border border-border ring-0 hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring active:bg-muted/50"
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
       role="button"
@@ -130,24 +130,24 @@ function ExerciseCard({ exercise, onClick }: { exercise: Exercise; onClick: () =
       <CardContent className="flex flex-col gap-0 p-2">
         {/* 顶行：标题 + 优先级标签 */}
         <div className="flex items-start justify-between">
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <h4 className="truncate text-sm font-semibold leading-snug text-foreground">
               {exercise.name}
             </h4>
-            <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            <span className="flex items-center gap-1 text-xs font-medium leading-4 text-muted-foreground">
               <Clock size={12} />
               {exercise.duration}
             </span>
           </div>
           <span
-            className="ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none text-white"
+            className="ml-2 shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium leading-none text-white"
             style={{ backgroundColor: priority.color }}
           >
             {priority.label}
           </span>
         </div>
-        {/* 描述 — 单行 */}
-        <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+        {/* 描述 — 单行，距标题8px */}
+        <p className="mt-2 line-clamp-1 text-sm leading-5 text-muted-foreground">
           {exercise.description}
         </p>
       </CardContent>
