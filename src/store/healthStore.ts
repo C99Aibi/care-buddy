@@ -63,6 +63,8 @@ interface DailyStats {
   sitBreaks: number;
   waterCups: number;
   customBreaks: number;
+  workMinutes: number;
+  eyeCare: number;
 }
 
 interface LockScreen {
@@ -179,6 +181,7 @@ interface HealthStore {
   setPaused: (paused: boolean) => void;
   setIdle: (idle: boolean) => void;
   resetAllTasks: () => void;
+  checkDayTransition: () => void;
 }
 
 // ============================================================================
@@ -590,6 +593,29 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
     });
   },
 
+  checkDayTransition: () => {
+    const state = get();
+    const today = getLocalDate();
+    if (state.todayStats.date !== '' && state.todayStats.date !== today) {
+      state.updateDailyStats(state.todayStats.date);
+      const fresh: TodayStats = {
+        date: today,
+        sitBreaks: 0,
+        waterCups: 0,
+        workMinutes: 0,
+        eyeCare: 0,
+        exercisesCompleted: 0,
+        customBreaks: 0,
+        exerciseMinutes: 0,
+        packagesCompleted: 0,
+        categoryCounts: { spine: 0, circulation: 0, metabolism: 0, vision: 0, wrist: 0 },
+        packageCounts: { 'package-quick': 0, 'package-standard': 0, 'package-deep': 0 },
+      };
+      setStorage(STORAGE_KEYS.TODAY_STATS, fresh);
+      set({ todayStats: fresh });
+    }
+  },
+
   updateDailyStats: (dateOverride?: string) => {
     const date = dateOverride ?? getLocalDate();
     set((state) => {
@@ -603,6 +629,8 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
         sitBreaks: state.todayStats.sitBreaks,
         waterCups: state.todayStats.waterCups,
         customBreaks: state.todayStats.customBreaks,
+        workMinutes: state.todayStats.workMinutes,
+        eyeCare: state.todayStats.eyeCare,
       };
 
       if (index >= 0) {

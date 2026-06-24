@@ -34,6 +34,16 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-overlay: var(--overlay);
 
+  /* ===== Custom — 看板页面专用 ===== */
+  --color-tab-bg: var(--tab-bg);
+  --color-tab-active-bg: var(--tab-active-bg);
+
+  /* ===== Grid — 看板页面 6 列网格 ===== */
+  --spacing-grid-col: var(--grid-col);
+  --spacing-grid-gap: var(--grid-gap);
+  --spacing-grid-offset: var(--grid-offset);
+  --spacing-grid-content: var(--grid-content);
+
   /* ===== Chart Colors ===== */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -84,6 +94,9 @@
 
   --text-type-badge: 12px;
   --text-type-badge--line-height: 18px;
+
+  --text-type-card-number: 20px;
+  --text-type-card-number--line-height: 26px;
 
   /* ===== Shadows ===== */
   --shadow-xs: var(--shadow-xs);
@@ -189,7 +202,7 @@
   --grid-col: 96px;
   --grid-gap: 16px;
   --content-padding: 16px;
-  --titlebar-height: 76px;
+  --titlebar-height: 48px;
   --content-width: 464px;
   --card-width: 136px;
   --card-area: calc(var(--card-width) * 3 + var(--spacing-3) * 2); /* 3 张卡片 + 2 个间距 */
@@ -218,6 +231,24 @@
   --type-badge: 12px;
   --type-badge-weight: 500;
   --type-badge-lh: 18px;
+  --type-card-number: 20px;
+  --type-card-number-weight: 600;
+  --type-card-number-lh: 26px;
+
+  /* ========================================
+     Custom — 看板页面专用
+     ======================================== */
+  --tab-bg: #e5e5e5;
+  --tab-active-bg: #ffffff;
+
+  /* ========================================
+     Grid — 看板页面 6 列网格
+     ======================================== */
+  --grid-cols: 6;
+  --grid-col: 64px;
+  --grid-gap: 12px;
+  --grid-offset: 24px;
+  --grid-content: calc(64px * 6 + 12px * 5); /* 444px */
 }
 
 @keyframes lockFadeIn {
@@ -297,6 +328,12 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.7);
+
+  /* ========================================
+     Custom — 看板页面专用 — dark
+     ======================================== */
+  --tab-bg: oklch(0.25 0 0);
+  --tab-active-bg: oklch(0.30 0 0);
 }
 
 @layer base {

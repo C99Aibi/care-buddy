@@ -14,7 +14,7 @@ export function PackageHero() {
   return (
     <div className="flex gap-3">
       {/* Hero 卡片 — 带动画 */}
-      <div className="relative flex-1 overflow-hidden rounded-2xl border border-border bg-card ring-0">
+      <div className="relative flex-1 overflow-hidden rounded-2xl border border-border bg-card ring-0 h-[180px]">
         <AnimatePresence mode="wait">
           {exercisePackages.map((pkg, i) => {
             if (i !== selectedIndex) return null;

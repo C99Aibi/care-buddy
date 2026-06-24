@@ -1,5 +1,4 @@
 export * from './Icons';
-export * from './Sidebar';
 export * from './TimerCards';
 export * from './TodayStats';
 export * from './QuickActions';
@@ -9,3 +8,6 @@ export * from './ExerciseLibrary';
 export * from './StatsDashboard';
 export * from './WindowControls';
 export * from './CircularProgress';
+export * from './Dashboard';
+export * from './CountdownSection';
+export * from './TodayStatsSection';

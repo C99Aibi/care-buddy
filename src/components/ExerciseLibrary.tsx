@@ -52,7 +52,7 @@ function ExerciseDetailModal({ exercise, onClose, onComplete }: ExerciseDetailMo
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <span className="rounded px-1.5 py-0.5 text-[0.65rem] font-semibold text-white" style={{ backgroundColor: priority.color }}>
+            <span className="rounded-full px-2 py-[1px] text-type-badge font-medium text-white" style={{ backgroundColor: priority.color }}>
               {priority.label}
             </span>
             <DialogTitle>{exercise.name}</DialogTitle>
@@ -121,33 +121,33 @@ function ExerciseCard({ exercise, onClick }: { exercise: Exercise; onClick: () =
   const priority = priorityLabels[exercise.priority];
   return (
     <Card
-      className="h-[84px] cursor-pointer border border-border ring-0 hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring active:bg-muted/50"
+      className="h-[84px] cursor-pointer border border-border p-2 gap-0 ring-0 hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring active:bg-muted/50"
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
       role="button"
       tabIndex={0}
     >
-      <CardContent className="flex flex-col gap-0 p-2">
+      <CardContent className="flex flex-col p-0">
         {/* 顶行：标题 + 优先级标签 */}
         <div className="flex items-start justify-between">
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-            <h4 className="truncate text-sm font-semibold leading-snug text-foreground">
+            <h4 className="truncate text-type-card-title font-semibold text-foreground">
               {exercise.name}
             </h4>
-            <span className="flex items-center gap-1 text-xs font-medium leading-4 text-muted-foreground">
-              <Clock size={12} />
+            <span className="flex items-center gap-1 text-type-caption font-medium text-muted-foreground">
+              <Clock size={16} />
               {exercise.duration}
             </span>
           </div>
           <span
-            className="ml-2 shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium leading-none text-white"
+            className="ml-2 shrink-0 rounded-full px-2 py-[1px] text-type-badge font-medium text-white"
             style={{ backgroundColor: priority.color }}
           >
             {priority.label}
           </span>
         </div>
         {/* 描述 — 单行，距标题8px */}
-        <p className="mt-2 line-clamp-1 text-sm leading-5 text-muted-foreground">
+        <p className="mt-2 line-clamp-1 text-type-body text-muted-foreground">
           {exercise.description}
         </p>
       </CardContent>
@@ -177,12 +177,12 @@ export function ExerciseLibrary() {
   const categoryTabLabels: Record<ExerciseCategory, string> = categoryNames;
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-3">
       {/* 套餐 Hero — 替换旧的 PackageCard 网格 */}
       <PackageHero />
 
       {/* 分类标签 */}
-      <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as ExerciseCategory)} className="mb-2">
+      <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as ExerciseCategory)}>
         <TabsList variant="line" className="gap-4">
           {CATEGORIES.map((cat) => (
             <TabsTrigger key={cat} value={cat} className="border-0">
@@ -193,7 +193,7 @@ export function ExerciseLibrary() {
       </Tabs>
 
       {/* 运动卡片 — 2 列网格 */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid min-h-0 flex-1 grid-cols-2 gap-3 content-start">
         {filteredExercises.map((exercise) => (
           <ExerciseCard
             key={exercise.id}

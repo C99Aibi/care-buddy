@@ -256,7 +256,7 @@ export const guidedExerciseConfigs: Record<string, GuidedExerciseConfig> = {
         { text: '站起', instruction: '从椅子上慢慢站起，不借助手臂', duration: 1 },
         { text: '坐下', instruction: '缓慢坐下，控制下降速度', duration: 1 },
       ],
-      repetitions: 10,
+      repetitions: 15,
     },
   },
 
@@ -273,7 +273,7 @@ export const guidedExerciseConfigs: Record<string, GuidedExerciseConfig> = {
         { text: '站起', instruction: '从椅子上慢慢站起，不借助手臂', duration: 1 },
         { text: '坐下', instruction: '缓慢坐下，控制下降速度', duration: 1 },
       ],
-      repetitions: 10,
+      repetitions: 15,
     },
   },
 

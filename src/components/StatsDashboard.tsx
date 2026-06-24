@@ -1,205 +1,223 @@
-/**
- * 统计数据可视化组件
- */
-
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { format, subDays } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  ReferenceLine,
 } from 'recharts';
 import { useHealthStore } from '../store';
-import { Clock, Target } from './Icons';
+import { Flame, Dumbbell, Timer, Armchair, Eye, GlassWater, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Toggle } from '@/components/ui/toggle';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+
+function computeStreak(dailyStats: { date: string; exercisesCompleted: number; sitBreaks: number; waterCups: number; customBreaks: number; eyeCare: number }[]): number {
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const dateStr = format(subDays(new Date(), i), 'yyyy-MM-dd');
+    const day = dailyStats.find((s) => s.date === dateStr);
+    if (day && (day.sitBreaks > 0 || day.waterCups > 0 || day.exercisesCompleted > 0 || day.customBreaks > 0 || day.eyeCare > 0)) {
+      streak++;
+    } else if (i > 0) {
+      break;
+    }
+  }
+  return streak;
+}
+
+const DAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
 
 export function StatsDashboard() {
   const { t } = useTranslation();
-  const [dashboardMode, setDashboardMode] = useState<'trend' | 'habits'>('trend');
   const dailyStats = useHealthStore((s) => s.dailyStats);
 
-  // 获取最近7天的数据
-  const weeklyData = useMemo(() => {
+  const streak = useMemo(() => computeStreak(dailyStats), [dailyStats]);
+
+  const weekData = useMemo(() => {
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const d = subDays(new Date(), i);
       const dateStr = format(d, 'yyyy-MM-dd');
-      const dayName = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
-      
       const dayData = dailyStats.find((s) => s.date === dateStr);
       days.push({
-        date: dayName,
-        dateFull: dateStr,
-        exercises: dayData?.exercisesCompleted || 0,
-        packages: dayData?.packagesCompleted || 0,
-        minutes: dayData?.exerciseMinutes || 0,
+        date: DAY_LABELS[d.getDay()],
         sitBreaks: dayData?.sitBreaks || 0,
+        eyeCare: dayData?.eyeCare || 0,
         waterCups: dayData?.waterCups || 0,
+        exercises: dayData?.exercisesCompleted || 0,
+        exerciseMinutes: dayData?.exerciseMinutes || 0,
+        customBreaks: dayData?.customBreaks || 0,
       });
     }
     return days;
   }, [dailyStats]);
 
-  // 获取最近30天的数据（按月统计）
-  const monthlyData = useMemo(() => {
+  const weekTotals = useMemo(() => {
+    return weekData.reduce(
+      (acc, d) => ({
+        exercises: acc.exercises + d.exercises,
+        exerciseMinutes: acc.exerciseMinutes + d.exerciseMinutes,
+        sitBreaks: acc.sitBreaks + d.sitBreaks,
+        eyeCare: acc.eyeCare + d.eyeCare,
+        waterCups: acc.waterCups + d.waterCups,
+        customBreaks: acc.customBreaks + d.customBreaks,
+      }),
+      { exercises: 0, exerciseMinutes: 0, sitBreaks: 0, eyeCare: 0, waterCups: 0, customBreaks: 0 }
+    );
+  }, [weekData]);
+
+  const biweeklyData = useMemo(() => {
     const days = [];
-    for (let i = 29; i >= 0; i--) {
+    for (let i = 13; i >= 0; i--) {
       const d = subDays(new Date(), i);
       const dateStr = format(d, 'yyyy-MM-dd');
-      const dayNum = d.getDate();
-      
       const dayData = dailyStats.find((s) => s.date === dateStr);
       days.push({
-        date: `${dayNum}${t('stats.day')}`,
-        dateFull: dateStr,
-        exercises: dayData?.exercisesCompleted || 0,
-        packages: dayData?.packagesCompleted || 0,
+        date: `${d.getMonth() + 1}/${d.getDate()}`,
         minutes: dayData?.exerciseMinutes || 0,
       });
     }
     return days;
   }, [dailyStats]);
 
-  // 计算总计
-  const totalStats = useMemo(() => {
-    const total = {
-      exercises: 0,
-      packages: 0,
-      minutes: 0,
-      sitBreaks: 0,
-      waterCups: 0,
-    };
-    dailyStats.forEach((d) => {
-      total.exercises += d.exercisesCompleted;
-      total.packages += d.packagesCompleted;
-      total.minutes += d.exerciseMinutes;
-      total.sitBreaks += d.sitBreaks;
-      total.waterCups += d.waterCups;
-    });
-    return total;
-  }, [dailyStats]);
+  const avgExerciseMinutes = useMemo(() => {
+    const total = biweeklyData.reduce((sum, d) => sum + d.minutes, 0);
+    return biweeklyData.length > 0 ? Math.round(total / biweeklyData.length) : 0;
+  }, [biweeklyData]);
+
+  const weeklyChartConfig = {
+    sitBreaks: {
+      label: t('statCards.sitReminder', { defaultValue: '久坐休息' }),
+      color: 'var(--chart-1)',
+    },
+    eyeCare: {
+      label: t('statCards.eyeCare', { defaultValue: '护眼' }),
+      color: 'var(--chart-3)',
+    },
+    waterCups: {
+      label: t('statCards.waterReminder', { defaultValue: '喝水' }),
+      color: 'var(--chart-4)',
+    },
+  } satisfies ChartConfig;
+
+  const exerciseChartConfig = {
+    minutes: {
+      label: t('stats.exerciseMinutes', { defaultValue: '运动时长(分钟)' }),
+      color: 'var(--chart-2)',
+    },
+  } satisfies ChartConfig;
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      {/* 总计卡片 */}
-      <Card>
+    <div className="flex w-full flex-col gap-2">
+      {/* 健康概览卡片 */}
+      <Card size="sm" className="border border-border ring-0">
         <CardHeader>
-          <CardTitle className="text-sm font-semibold">{t('stats.totalSummary')}</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t('stats.overview', { defaultValue: '健康概览' })}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg bg-muted p-3 text-center">
-              <div className="text-lg font-bold text-primary">{totalStats.exercises}</div>
-              <div className="text-xs text-muted-foreground">{t('stats.exercisesCompleted')}</div>
+        <CardContent className="flex flex-col gap-2">
+          <div className="flex items-stretch gap-2">
+            <div className="flex flex-1 flex-col items-center justify-center rounded-lg bg-muted/50 py-1.5">
+              <div className="flex items-center gap-1 text-orange-500">
+                <Flame size={16} />
+                <span className="text-xl font-bold">{streak}</span>
+              </div>
+              <span className="text-[11px] text-muted-foreground">{t('dashboard.streakDays', { defaultValue: '连续天数' })}</span>
             </div>
-            <div className="rounded-lg bg-muted p-3 text-center">
-              <div className="text-lg font-bold text-primary">{totalStats.packages}</div>
-              <div className="text-xs text-muted-foreground">{t('stats.packagesCompleted')}</div>
+            <div className="flex flex-1 flex-col items-center justify-center rounded-lg bg-muted/50 py-1.5">
+              <div className="flex items-center gap-1 text-primary">
+                <Dumbbell size={16} />
+                <span className="text-xl font-bold">{weekTotals.exercises}</span>
+              </div>
+              <span className="text-[11px] text-muted-foreground">{t('stats.thisWeekExercises', { defaultValue: '本周运动(次)' })}</span>
             </div>
-            <div className="rounded-lg bg-muted p-3 text-center">
-              <div className="text-lg font-bold text-primary">{totalStats.minutes}min</div>
-              <div className="text-xs text-muted-foreground">{t('stats.totalExerciseMinutes')}</div>
+            <div className="flex flex-1 flex-col items-center justify-center rounded-lg bg-muted/50 py-1.5">
+              <div className="flex items-center gap-1 text-chart-2">
+                <Timer size={16} />
+                <span className="text-xl font-bold">{weekTotals.exerciseMinutes}</span>
+              </div>
+              <span className="text-[11px] text-muted-foreground">{t('stats.thisWeekMinutes', { defaultValue: '本周时长(分)' })}</span>
             </div>
-            <div className="rounded-lg bg-muted p-3 text-center">
-              <div className="text-lg font-bold text-primary">{totalStats.sitBreaks}</div>
-              <div className="text-xs text-muted-foreground">{t('stats.sitBreaks')}</div>
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            <div className="flex flex-col items-center rounded-md bg-muted/30 py-1">
+              <div className="flex items-center gap-0.5">
+                <Armchair size={12} className="text-chart-1" />
+                <span className="text-sm font-semibold tabular-nums">{weekTotals.sitBreaks}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">{t('statCards.sitReminder', { defaultValue: '久坐' })}</span>
             </div>
-            <div className="rounded-lg bg-muted p-3 text-center">
-              <div className="text-lg font-bold text-primary">{totalStats.waterCups}</div>
-              <div className="text-xs text-muted-foreground">{t('stats.waterCups')}</div>
+            <div className="flex flex-col items-center rounded-md bg-muted/30 py-1">
+              <div className="flex items-center gap-0.5">
+                <Eye size={12} className="text-chart-3" />
+                <span className="text-sm font-semibold tabular-nums">{weekTotals.eyeCare}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">{t('statCards.eyeCare', { defaultValue: '护眼' })}</span>
             </div>
-            <div className="rounded-lg bg-muted p-3 text-center">
-              <div className="text-lg font-bold text-primary">{dailyStats.length}</div>
-              <div className="text-xs text-muted-foreground">{t('stats.recordDays')}</div>
+            <div className="flex flex-col items-center rounded-md bg-muted/30 py-1">
+              <div className="flex items-center gap-0.5">
+                <GlassWater size={12} className="text-chart-4" />
+                <span className="text-sm font-semibold tabular-nums">{weekTotals.waterCups}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">{t('statCards.waterReminder', { defaultValue: '喝水' })}</span>
+            </div>
+            <div className="flex flex-col items-center rounded-md bg-muted/30 py-1">
+              <div className="flex items-center gap-0.5">
+                <Plus size={12} className="text-muted-foreground" />
+                <span className="text-sm font-semibold tabular-nums">{weekTotals.customBreaks}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">{t('stats.customBreaks', { defaultValue: '主动' })}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* 本周数据 */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <Target size={16} />
-              {t('stats.weeklyData')}
-            </CardTitle>
-            <div className="flex gap-1">
-              <Toggle
-                size="sm"
-                pressed={dashboardMode === 'trend'}
-                onPressedChange={() => setDashboardMode('trend')}
-                className="rounded-full px-3"
-              >
-                {t('stats.weeklyTrend')}
-              </Toggle>
-              <Toggle
-                size="sm"
-                pressed={dashboardMode === 'habits'}
-                onPressedChange={() => setDashboardMode('habits')}
-                className="rounded-full px-3"
-              >
-                {t('stats.weeklyHabits')}
-              </Toggle>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-0 pt-4">
-          {dashboardMode === 'trend' ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="date" tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
-                <YAxis tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
-                <Tooltip contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px' }} />
-                <Legend />
-                <Line type="monotone" dataKey="exercises" name={t('stats.exercisesCompleted')} stroke="var(--chart-1)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="packages" name={t('stats.packagesCompleted')} stroke="var(--chart-2)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="date" tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
-                <YAxis tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
-                <Tooltip contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px' }} />
-                <Legend />
-                <Bar dataKey="sitBreaks" name={t('stats.sitBreaks')} fill="var(--chart-5)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="waterCups" name={t('stats.waterCups')} fill="var(--chart-3)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 本月运动时长 */}
-      <Card>
+      {/* 本周健康习惯卡片 */}
+      <Card size="sm" className="border border-border ring-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-            <Clock size={16} />
-            {t('stats.monthlyMinutes')}
+            {t('stats.weeklyHabits', { defaultValue: '本周健康习惯' })}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="date" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} />
-              <YAxis tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
-              <Tooltip contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px' }} />
-              <Bar dataKey="minutes" name={t('stats.totalExerciseMinutes')} fill="var(--chart-4)" radius={[4, 4, 0, 0]} />
+        <CardContent className="px-0 pt-0">
+          <ChartContainer config={weeklyChartConfig} className="!aspect-auto w-full" style={{ height: '175px' }}>
+            <BarChart data={weekData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }} barGap={2}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} allowDecimals={false} width={28} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="sitBreaks" fill="var(--color-sitBreaks)" radius={[3, 3, 0, 0]} barSize={10} />
+              <Bar dataKey="eyeCare" fill="var(--color-eyeCare)" radius={[3, 3, 0, 0]} barSize={10} />
+              <Bar dataKey="waterCups" fill="var(--color-waterCups)" radius={[3, 3, 0, 0]} barSize={10} />
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* 运动趋势卡片 */}
+      <Card size="sm" className="border border-border ring-0">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Dumbbell size={14} />
+            {t('stats.exerciseTrend', { defaultValue: '运动趋势' })}
+            <span className="ml-auto text-[11px] font-normal text-muted-foreground">
+              {t('stats.avgMinutes', { defaultValue: '日均' })} {avgExerciseMinutes}{t('dashboard.minutes', { defaultValue: '分钟' })}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <ChartContainer config={exerciseChartConfig} className="!aspect-auto w-full" style={{ height: '135px' }}>
+            <BarChart data={biweeklyData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} interval={1} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} allowDecimals={false} width={28} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <ReferenceLine y={avgExerciseMinutes} stroke="var(--muted-foreground)" strokeDasharray="3 3" strokeWidth={1} />
+              <Bar dataKey="minutes" fill="var(--color-minutes)" radius={[3, 3, 0, 0]} barSize={14} />
+            </BarChart>
+          </ChartContainer>
         </CardContent>
       </Card>
     </div>

@@ -16,6 +16,7 @@ Thumbs.db
 .opencode/
 .trae/
 .claude/
+.hermes/
 
 # Tauri 鏋勫缓浜х墿
 src-tauri/target/
@@ -46,8 +47,8 @@ docs/
 鎵撳寘鎸囧崡.md
 
 
-# 运行时日志
+# 锟斤拷锟斤拷时锟斤拷志
 log.txt
 
-# 构建产物
+# 锟斤拷锟斤拷锟斤拷锟斤拷
 dist-node/

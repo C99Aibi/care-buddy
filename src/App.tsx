@@ -118,7 +118,7 @@ export default function App() {
 
       {/* 内容区 */}
       <main className="flex-1 overflow-y-auto px-2 pb-2">
-        <div className="mx-auto w-full max-w-[calc(var(--grid-content)+32px)] rounded-[14px] bg-card p-4">
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-[calc(var(--grid-content)+32px)] flex-col rounded-[14px] bg-card p-4">
           {viewMode === 'main' && <Dashboard />}
           {viewMode === 'exercise' && <ExerciseLibrary />}
           {viewMode === 'stats' && <StatsDashboard />}
