@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHealthStore } from '../store';
+import { motion } from 'motion/react';
 import { Pause, Play, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -33,6 +34,33 @@ function formatCountdown(seconds: number) {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   }
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function formatDurationUnit(seconds: number, t: ReturnType<typeof useTranslation>['t']) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) {
+    return (
+      <span className="flex items-baseline gap-0.5">
+        <span>{h}</span>
+        <span className="text-type-caption text-muted-foreground">
+          {t('dashboard.durationHoursMinutes', { defaultValue: '小时' })}
+        </span>
+        <span>{m}</span>
+        <span className="text-type-caption text-muted-foreground">
+          {t('dashboard.durationMinutes', { defaultValue: '分钟' })}
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="flex items-baseline gap-0.5">
+      <span>{m}</span>
+      <span className="text-type-caption text-muted-foreground">
+        {t('dashboard.durationMinutes', { defaultValue: '分钟' })}
+      </span>
+    </span>
+  );
 }
 
 export function CountdownSection() {
@@ -231,12 +259,18 @@ export function CountdownSection() {
 
         {/* 计时器盒 */}
         <div
-          className="absolute flex flex-col items-center justify-center rounded-[22px] bg-muted border border-[#efefef]"
+          className="absolute flex flex-col items-center justify-center rounded-[22px] bg-muted border border-[#efefef] timer-breathe"
           style={{ top: '60px', left: '50px', width: '192px', height: '88px' }}
         >
-          <span className="text-type-timer-number font-bold text-foreground tabular-nums">
+          <motion.span
+            key={mainTask ? mainTask.remaining : undefined}
+            initial={mainTask ? { y: 6, opacity: 0 } : false}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="text-type-timer-number font-bold text-foreground tabular-nums"
+          >
             {mainTask ? formatCountdown(mainTask.remaining) : '--:--:--'}
-          </span>
+          </motion.span>
           <span className="text-type-caption text-muted-foreground">
             {mainTask
               ? t('dashboard.remainingPercent', { percent: Math.round((1 - mainProgress) * 100), defaultValue: `剩余${Math.round((1 - mainProgress) * 100)}%` }).replace('{{percent}}', String(Math.round((1 - mainProgress) * 100)))
@@ -282,7 +316,7 @@ export function CountdownSection() {
             <Card
               key={task.id}
               className={cn(
-                'absolute overflow-hidden border border-border ring-0',
+                'absolute overflow-hidden border border-border ring-0 group',
                 taskPaused && 'opacity-60'
               )}
               style={{
@@ -294,11 +328,11 @@ export function CountdownSection() {
                 padding: '8px',
               }}
             >
-              <div className="flex h-full items-center justify-between">
+              <div className="flex h-full items-center justify-between transition-opacity duration-200 group-hover:opacity-0">
                 {/* 左侧：倒计时 + 任务名 */}
                 <div className="flex flex-col">
                   <span className="text-type-card-number font-semibold text-foreground tabular-nums leading-[var(--type-card-number-lh)]">
-                    {formatCountdown(remaining)}
+                    {formatDurationUnit(remaining, t)}
                   </span>
                   <span className="text-type-body text-muted-foreground leading-[var(--type-body-lh)]">
                     {t('taskNames.' + task.id, { defaultValue: task.title })}
@@ -318,24 +352,31 @@ export function CountdownSection() {
                 </div>
               </div>
 
-              {/* Hover 操作按钮 */}
-              <div className="absolute inset-0 flex items-center justify-center gap-1 rounded-[10px] bg-card/90 opacity-0 transition-opacity group-hover:opacity-100">
-                <Button
-                  variant="outline"
-                  size="icon-xs"
-                  className="rounded-md"
-                  onClick={() => handleTogglePause(task.id)}
-                >
-                  {ts?.paused ? <Play size={12} /> : <Pause size={12} />}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon-xs"
-                  className="rounded-md"
-                  onClick={() => handleReset(task.id)}
-                >
-                  <RotateCcw size={12} />
-                </Button>
+              {/* Hover 覆盖层 */}
+              <div className="absolute inset-0 flex flex-col items-center justify-between rounded-[8px] bg-card p-2 pointer-events-none opacity-0 scale-95 transition-all duration-200 ease-out group-hover:pointer-events-auto group-hover:opacity-100 group-hover:scale-100">
+                {/* 顶部：提醒名称 */}
+                <span className="text-type-caption font-normal text-foreground text-center leading-[var(--type-caption-lh)]">
+                  {t('taskNames.' + task.id, { defaultValue: task.title })}
+                </span>
+                {/* 底部：操作按钮 */}
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    className="px-3 pointer-events-auto"
+                    onClick={() => handleTogglePause(task.id)}
+                  >
+                    {ts?.paused ? <Play size={12} /> : <Pause size={12} />}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    className="px-3 pointer-events-auto"
+                    onClick={() => handleReset(task.id)}
+                  >
+                    <RotateCcw size={12} />
+                  </Button>
+                </div>
               </div>
             </Card>
           );
